@@ -102,3 +102,57 @@
   "personnelId": "p001",
   "materialId": "m002"
 }
+```
+## 3. 数据库设置与使用 （sql文件已上传main分支）
+
+> [!IMPORTANT]
+> **架构核心原则:** 本项目**严格**遵循“一个服务一个数据库” (Database-per-Service) 的微服务架构原则。
+> 
+> * **严禁** 多个模块服务共享同一个数据库 
+> * **严禁** 一个服务跨界连接另一个服务的数据库 (例如：Python 服务去 `SELECT` 人员表)。
+> * 服务之间的所有通信 **必须** 通过 `API文档.md` 中定义的 **API (HTTP)** 来完成。
+
+---
+
+### 3.1 数据库分工 (Database Responsibilities)
+
+根据“一个服务一个数据库”的原则，本项目共有 **3 个独立的数据库**，请由负责三个模块的成员分别管理。
+
+#### 1. Personnel (人员) 服务 (@ 8083)
+
+* **数据库:** `personnel_db` (使用 `MySQL`)
+* **表:** `personnel` (详情见 `personnel.sql`)
+* **任务:**
+    1.  你需要在你本地的 MySQL 中**创建 `personnel_db` 数据库**。
+    2.  执行 `personnel.sql` 脚本，创建 `personnel` 表。
+    3.  你的服务 (区别于js和python的第四种语言) 是**唯一**连接 `personnel_db` 的程序。
+    4.  你负责实现包括 `GET /personnel` 等在内的所有与人员相关的 API。
+
+#### 2. Material (物资) 服务 (@ 8082)
+
+* **数据库:** `materials_db` (使用 `MySQL`)
+* **表:** `materials` (详情见 `materials.sql`)
+* **任务:**
+    1.  你需要在你本地的 MySQL 中**创建 `materials_db` 数据库**。
+    2.  执行 `materials.sql` 脚本，创建 `materials` 表。
+    3.  你的 Node.js 服务是**唯一**连接 `materials_db` 的程序。
+    4.  你负责实现包括 `GET /materials` 等在内所有与物资相关的 API。
+
+#### 3. Borrow (借用) 服务 (@ 8081)
+
+* **数据库:** `borrows_db` (使用 `MySQL`)
+* **表:** `borrows` (详情见 `borrows.sql`)
+* **任务:**
+    1.  你需要在你本地的 MySQL 中**创建 `borrows_db` 数据库**。
+    2.  执行 `borrows.sql` 脚本，创建 `borrows` 表。
+    3.  你的 Python 服务是**唯一**连接 `borrows_db` 的程序。
+    4.  你负责实现包括 `GET /borrows` 等在内的所有与借用记录相关的 API。
+
+#### 4.  Java 网关 (@ 8080)（目前基本实现）
+
+* **数据库:** **无 (NONE)**
+* **任务:**
+    1.   `java-gateway` 服务是一个**“纯网关”**，**不连接任何数据库**。
+    2.  确保 `pom.xml` 中**没有** `spring-data-jpa` 和 `mysql-driver` 依赖。
+    3.  确保 `application.properties` 中**没有** `spring.datasource.url` 等配置。
+    4.  工作是 100% 通过 `RestTemplate` (HTTP API) 来调用 8081, 8082, 和 8083。
