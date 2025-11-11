@@ -156,3 +156,144 @@
     2.  确保 `pom.xml` 中**没有** `spring-data-jpa` 和 `mysql-driver` 依赖。
     3.  确保 `application.properties` 中**没有** `spring.datasource.url` 等配置。
     4.  工作是 100% 通过 `RestTemplate` (HTTP API) 来调用 8081, 8082, 和 8083。
+
+---
+## 4. 快速上手指南 (Developer Quick Start)
+
+本指南旨在帮助快速启动、开发和测试你所负责的微服务。
+
+### A.  (Python Borrows Service @ 8081)
+
+任务是实现 `python-borrows` 模块。
+
+1.  **进入目录:**
+    ```bash
+    cd python-borrows
+    ```
+2.  **创建并激活虚拟环境:**
+    ```bash
+    # (Windows)
+    python -m venv .venv
+    .\.venv\Scripts\activate
+    
+    # (macOS/Linux)
+    python3 -m venv .venv
+    source .venv/bin/activate
+    ```
+3.  **安装依赖:** (确保 `requirements.txt` 文件已存在)
+    ```bash
+    pip install -r requirements.txt
+    pip install flask-sqlalchemy pymysql 
+    ```
+4.  **开发:**
+  * **核心文件:** 在 `app.py` (或 `main.py`) 中编写你的 Flask 代码。
+  * **数据库:** 在此文件中，配置 `SQLAlchemy` 连接到你本地的 `borrows_db` (MySQL)。
+  * **任务:** 严格按照 `API文档.md` 文档，实现所有 `GET /borrows`, `POST /borrows` 等 4 个 API 路由和数据库逻辑。
+5.  **运行你的服务:**
+    ```bash
+    # 确保在 8081 端口运行
+    flask run --port=8081
+    ```
+6.  **独立测试:**
+  * 使用 Postman 或 curl **独立测试**你的服务。
+  * **示例:** `GET http://localhost:8081/borrows` ，确保它能正确返回 JSON 数据或空列表 `[]`。
+
+---
+
+### B.(Node.js Materials Service @ 8082)
+
+任务是实现 `node-materials` 模块。
+
+1.  **进入目录:**
+    ```bash
+    cd node-materials
+    ```
+2.  **安装依赖:**
+    ```bash
+    npm install
+    # (你可能还需要安装 mysql 驱动)
+    npm install mysql2 
+    ```
+3.  **开发:**
+  * **核心文件:** 在 `app.js` (或 `routes/materials.js`) 中编写你的 Express 代码。
+  * **数据库:** 在此文件中，配置 `mysql2` 库连接到你本地的 `materials_db`。
+  * **任务:** 严格按照 `API文档.md` 文档，实现所有 `GET /materials`, `POST /materials` 等 5 个 API 路由和数据库逻辑。
+5.  **运行你的服务:**
+    ```bash
+    # 确保你的 package.json "start" 脚本指定了 8082 端口
+    npm start
+    ```
+6.  **独立测试:**
+  * 使用 Postman **独立测试**你的服务。
+  * **示例:** `GET http://localhost:8082/materials` ，确保它能正确返回 JSON 数据。
+
+---
+
+好的，使用 Go 语言（Golang）是一个非常棒的选择，它就是为构建这种高性能微服务而生的。
+
+我已经帮你**修改了 `README.md` 中组员 C 的那一部分**，把步骤换成了使用 Go 语言和 Gin 框架（Go 社区最流行的 Web 框架）的具体指南。
+
+你只需要**复制下面的内容**，替换掉你 `README.md` 里 `## 5. 🧑‍💻 开发者快速上手指南` 中的 `### C. 组员 C` 那一段即可。
+
+-----
+
+### C. (Go Personnel Service @ 8083)
+
+你的任务是实现 `personnel-service` 模块 (假如使用 Go 语言)。
+
+1.  **创建目录并初始化:**
+    ```bash
+    # 1. 在 IDEA 项目根目录创建新文件夹
+    mkdir personnel-service
+    cd personnel-service
+    # 2. 初始化 Go 模块 (将 "personnel-service" 替换为你的 GitHub 路径)
+    # 例如: go mod init github.com/CXZHANG0508/Lab1_SOA_Project/personnel-service
+    go mod init personnel-service 
+    ```
+2.  **安装/配置 (获取 Go 依赖):**
+  * **Gin 框架 (推荐，用于 Web API):**
+    ```bash
+    go get -u github.com/gin-gonic/gin
+    ```
+  * **MySQL 驱动:**
+    ```bash
+    go get -u github.com/go-sql-driver/mysql
+    ```
+3.  **开发:**
+  * **核心文件:** `main.go`。
+  * **数据库:** 在 `main.go` 中，使用 `sql.Open("mysql", ...)` 来配置和连接到你本地的 `personnel_db`。
+  * **任务:** 严格按照 `API文档.md` 文档，使用 Gin 框架 (`router.GET("/personnel", ...)`, `router.POST("/personnel", ...)` 等) 实现所有 5 个 API 路由和数据库逻辑。
+4.  **运行服务:**
+    ```bash
+    # Go 会自动编译并运行
+    # 确保你的 Go 代码中 http.ListenAndServe(":8083", router) 是 8083 端口
+    go run main.go
+    ```
+5.  **独立测试:**
+  * 使用 Postman **独立测试**你的服务。
+  * **示例:** `GET http://localhost:8083/personnel`。
+
+-----
+### D.  (Java Gateway & 集成测试 @ 8080)
+
+任务是**集成**和**联调**。
+
+1.  **运行网关:**
+  * 在 IDEA 中打开 `java-gateway`，点击 "Run" 启动 (运行在 8080)。
+2.  **联调 (Integration Test):**
+  * 必须**同时运行所有 4 个服务** (8080, 8081, 8082, 8083)。
+  * **测试简单转发:**
+    * 打开 Postman，调用**网关**的 API：`GET http://localhost:8080/api/personnel`
+    * 检查 Java 网关 (8080) 是否成功调用了 8083 服务并返回了数据。
+  * **测试核心编排:**
+    * 打开 Postman，调用**网关**的核心 API：
+    * `POST http://localhost:8080/api/borrow-material`
+    * **请求体 (Body):**
+      ```json
+      {
+        "personnelId": "p001", 
+        "materialId": "m001",
+        "quantity": 1
+      }
+      ```
+    * **检查结果:** 检查 `borrows_db` 和 `materials_db` 数据库，看数据是否被正确 `INSERT` 和 `UPDATE`。
