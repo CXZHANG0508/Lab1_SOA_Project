@@ -6,4 +6,5 @@ import lombok.Data;
 public class BorrowRequestDTO {
     private String personnelId;
     private String materialId;
+    private int quantity;
 }

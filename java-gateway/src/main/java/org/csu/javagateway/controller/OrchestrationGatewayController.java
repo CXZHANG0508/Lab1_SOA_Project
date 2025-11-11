@@ -31,10 +31,11 @@ public class OrchestrationGatewayController {
     public ResponseEntity<?> borrowMaterial(@RequestBody BorrowRequestDTO borrowRequest) {
 
         // 调用 Python 服务 (8081)，创建借用记录,构建它需要的 JSON 请求体
-        Map<String, String> borrowRequestBody = new HashMap<>();
+        Map<String, Object> borrowRequestBody = new HashMap<>();
         borrowRequestBody.put("personnelId", borrowRequest.getPersonnelId());
         borrowRequestBody.put("materialId", borrowRequest.getMaterialId());
         borrowRequestBody.put("borrowDate", Instant.now().toString());
+        borrowRequestBody.put("quantity", borrowRequest.getQuantity());
 
         //  Python 服务返回的 JSON 字符串
         String newBorrowRecord = restTemplate.postForObject(
@@ -47,7 +48,7 @@ public class OrchestrationGatewayController {
         // 目前假设 Node.js 能理解这个格式：{ "action": "decrease_stock", "quantity": 1 })
         Map<String, Object> materialUpdateBody = new HashMap<>();
         materialUpdateBody.put("action", "decrease_stock");
-        materialUpdateBody.put("quantity", 1);
+        materialUpdateBody.put("quantity", borrowRequest.getQuantity());
 
         // 构造物资服务的 URL (目前假设为: .../materials/m002)
         String materialUrl = MATERIAL_SERVICE_URL + "/" + borrowRequest.getMaterialId();
