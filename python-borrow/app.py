@@ -1,3 +1,4 @@
+import requests
 from flask import Flask, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
@@ -10,6 +11,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
+PERSONNEL_SERVICE_URL = "http://localhost:8083/personnel"
 
 # 数据库模型（映射 borrow 表）
 class Borrow(db.Model):
@@ -55,12 +57,23 @@ def get_borrow(borrow_id):
 @app.route("/borrows", methods=["POST"])
 def create_borrow():
     data = request.json
-    if "personnel_id" not in data or "material_id" not in data:
-        return jsonify({"error": "personnel_id and material_id required"}), 400
+
+    personnel_id = data.get("personnelId")
+
+    if "personnelId" not in data or "materialId" not in data:
+        return jsonify({"error": "personnelId and materialId required"}), 400
+
+    try:
+        resp = requests.get(f"{PERSONNEL_SERVICE_URL}/{personnel_id}")
+        if resp.status_code != 200:
+            return jsonify({"error": "Personnel not found"}), 400
+
+    except requests.RequestException:
+        return jsonify({"error": "Personnel service unavailable"}), 503
 
     new_record = Borrow(
-        personnel_id=data["personnel_id"],
-        material_id=data["material_id"],
+        personnel_id=data["personnelId"],
+        material_id=data["materialId"],
         quantity=data.get("quantity", 1),
         status="BORROWED"
     )
@@ -99,30 +112,28 @@ def update_borrow(borrow_id):
     return jsonify(record.to_dict())
 
 
-# 5. 删除记录
 @app.route("/borrows/<int:borrow_id>", methods=["DELETE"])
-def delete_borrow(borrow_id):
+def return_borrow(borrow_id):
     record = Borrow.query.get(borrow_id)
     if not record:
         return jsonify({"error": "Record not found"}), 404
 
-    db.session.delete(record)
+    if record.status == "RETURNED":
+        return jsonify({"message": "Already returned"}), 400
+
+    record.status = "RETURNED"
+    record.return_date = datetime.now()
+
     db.session.commit()
-    return jsonify({"message": "Record deleted"})
 
-
-# 6. 查询某人的借用记录（供 Java 网关调用）
-@app.route("/persons/<personnel_id>/borrows", methods=["GET"])
-def get_borrows_by_person(personnel_id):
-    records = Borrow.query.filter_by(personnel_id=personnel_id).all()
-    return jsonify([r.to_dict() for r in records])
-
-
-# 7. 查询某物资借出数量（供 Node 或 Gateway 调用）
-@app.route("/materials/<material_id>/borrows/count", methods=["GET"])
-def get_borrow_count(material_id):
-    count = Borrow.query.filter_by(material_id=material_id, status="BORROWED").count()
-    return jsonify({"material_id": material_id, "borrowed_count": count})
+    return jsonify({
+        "message": "Borrow record returned successfully",
+        "record": {
+            "borrow_id": record.borrow_id,
+            "status": record.status,
+            "return_date": record.return_date
+        }
+    })
 
 
 # 启动服务
