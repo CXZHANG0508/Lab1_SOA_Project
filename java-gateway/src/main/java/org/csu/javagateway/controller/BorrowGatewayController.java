@@ -1,7 +1,7 @@
 package org.csu.javagateway.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 
@@ -36,17 +36,26 @@ public class BorrowGatewayController {
 
     //增：创建新的借用记录
     @PostMapping
-    public ResponseEntity<?> createBorrow(@RequestBody String requestBody) {
-        String response = restTemplate.postForObject(BORROW_SERVICE_URL, requestBody, String.class);
+    public ResponseEntity<?> create(@RequestBody Object body) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<Object> request = new HttpEntity<>(body, headers);
+
+        String response = restTemplate.postForObject(BORROW_SERVICE_URL, request, String.class);
         return ResponseEntity.ok(response);
     }
 
     //改：更新特定借用记录的ID
     // (注意: 我们的 API 设计中 '修改' 借用记录不常见，但 '归还' 是 DELETE，我们保持模板一致性)
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateBorrow(@PathVariable String id, @RequestBody String requestBody) {
+    public ResponseEntity<?> update(@PathVariable String id, @RequestBody Object body) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<Object> request = new HttpEntity<>(body, headers);
+
         String url = BORROW_SERVICE_URL + "/" + id;
-        restTemplate.put(url, requestBody);
+        restTemplate.exchange(url, HttpMethod.PUT, request, String.class);
+
         return ResponseEntity.ok("Borrow record updated successfully");
     }
 

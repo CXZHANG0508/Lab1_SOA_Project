@@ -1,7 +1,7 @@
 package org.csu.javagateway.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 
@@ -40,20 +40,25 @@ public class PersonnelGatewayController {
     @PostMapping
     public ResponseEntity<?> createPersonnel(@RequestBody String requestBody) {
         // @RequestBody会捕获客户端发来的 JSON
-        //转发给内部服务，并接收内部服务返回的响应
-        String response = restTemplate.postForObject(PERSONNEL_SERVICE_URL, requestBody, String.class);
-        // 返回状态码
+        //转发给内部服务，设置内容格式为json，并接收内部服务返回的响应
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<String> requestEntity = new HttpEntity<>(requestBody, headers);
+
+        String response = restTemplate.postForObject(PERSONNEL_SERVICE_URL, requestEntity, String.class);
         return ResponseEntity.ok(response);
     }
 
     //改：更新特定人员的ID
     @PutMapping("/{id}")
     public ResponseEntity<?> updatePersonnel(@PathVariable String id, @RequestBody String requestBody) {
-        String url = PERSONNEL_SERVICE_URL + "/" + id;
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
 
-        //直接执行 HTTP PUT 请求，如果内部服务出错，抛出异常
-        restTemplate.put(url, requestBody);
-        // 如果上面没有抛出异常，说明更新成功
+        HttpEntity<String> requestEntity = new HttpEntity<>(requestBody, headers);
+
+        restTemplate.exchange(PERSONNEL_SERVICE_URL + "/" + id, HttpMethod.PUT, requestEntity, Void.class);
         return ResponseEntity.ok("Personnel updated successfully");
     }
 

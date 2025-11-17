@@ -1,7 +1,7 @@
 package org.csu.javagateway.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 
@@ -37,16 +37,31 @@ public class MaterialGatewayController {
     //增：创建新的物资
     @PostMapping
     public ResponseEntity<?> createMaterial(@RequestBody String requestBody) {
-        String response = restTemplate.postForObject(MATERIAL_SERVICE_URL, requestBody, String.class);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<String> requestEntity = new HttpEntity<>(requestBody, headers);
+
+        String response = restTemplate.postForObject(MATERIAL_SERVICE_URL, requestEntity, String.class);
         return ResponseEntity.ok(response);
     }
 
     //改：更新特定物资的ID
     @PutMapping("/{id}")
     public ResponseEntity<?> updateMaterial(@PathVariable String id, @RequestBody String requestBody) {
-        String url = MATERIAL_SERVICE_URL + "/" + id;
-        restTemplate.put(url, requestBody);
-        return ResponseEntity.ok("Material updated successfully");
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<String> request = new HttpEntity<>(requestBody, headers);
+
+        ResponseEntity<String> response = restTemplate.exchange(
+                MATERIAL_SERVICE_URL + "/" + id,
+                HttpMethod.PUT,
+                request,
+                String.class
+        );
+
+        return ResponseEntity.ok(response.getBody());
     }
 
     //删：删除特定物资
