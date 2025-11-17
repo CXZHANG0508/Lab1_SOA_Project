@@ -32,7 +32,7 @@ router.post("/", async (req, res) => {
 
     try {
         const [result] = await db.query(
-            "INSERT INTO materials (name, stock, category, location) VALUES (?, ?, ?, ?)",
+            "INSERT INTO materials (name, stock, category, location, created_at, updated_at) VALUES (?, ?, ?, ?, NOW(), NOW())",
             [name, stock, category, location]
         );
 
@@ -49,25 +49,33 @@ router.post("/", async (req, res) => {
 
 // 更新物资
 router.put("/:id", async (req, res) => {
-    const { name, stock, category, location } = req.body;
+    const fields = [];
+    const values = [];
+
+    // 动态更新
+    for (const [key, value] of Object.entries(req.body)) {
+        fields.push(`${key} = ?`);
+        values.push(value);
+    }
+
+    // 最后更新 updated_at
+    fields.push("updated_at = NOW()");
+
+    // WHERE
+    values.push(req.params.id);
 
     try {
-        await db.query(
-            "UPDATE materials SET name=?, stock=?, category=?, location=? WHERE material_id=?",
-            [name, stock, category, location, req.params.id]
-        );
+        const sql = `UPDATE materials SET ${fields.join(", ")} WHERE material_id = ?`;
 
-        const [result] = await db.query(
-            "SELECT * FROM materials WHERE material_id = ?",
-            [req.params.id]
-        );
+        await db.query(sql, values);
 
-        res.json(result[0]);
+        const [updated] = await db.query("SELECT * FROM materials WHERE material_id = ?", [req.params.id]);
+
+        res.json(updated[0] ?? { message: "empty response" });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
-
 // 删除物资
 router.delete("/:id", async (req, res) => {
     try {
